@@ -305,3 +305,8 @@ img.figure.boxed { border-radius: 16px; border: 2px solid var(--c); filter: none
   .bubble { max-width: 85%; }
   .slider, .check { display: none; }
 }
+
+/* Lines nobody could be matched to: keep the stand-in small so it doesn't take over the page */
+.reader.stage .sline.nobody .figure-btn .figure { height: calc(var(--fig) * 0.38) !important; }
+.reader.stage .sline.nobody { margin: 14px 0 18px; }
+.sline.extra .figure-btn .figure { opacity: 0.85; }

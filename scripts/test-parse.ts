@@ -27,7 +27,16 @@ Dan forced one trembling leg onto the step.
 "You first," he said.
 "Don't argue with me, Dan," Ema snapped.
 “Fine.”
-She shoved him through the doors. “And stay down.”`;
+She shoved him through the doors. “And stay down.”
+The children erupted.
+"IT'S EMA!"
+"She's so cool!"
+"EMA!"
+The kids cheered louder.
+"Halt!" a guard shouted.
+The van door slammed.
+"Dan, wait," said Ema.
+"What?"`;
 
 const expected: Record<string, string> = {
   '"Come on!"': 'ema',
@@ -37,14 +46,21 @@ const expected: Record<string, string> = {
   '"Don\'t argue with me, Dan," Ema snapped.': 'ema',
   '“Fine.”': 'dan',
   'She shoved him through the doors. “And stay down.”': 'ema',
+  '"IT\'S EMA!"': 'The children',
+  '"She\'s so cool!"': 'The children',
+  '"EMA!"': 'The children',
+  '"Halt!" a guard shouted.': 'A guard',
+  '"Dan, wait," said Ema.': 'ema',
+  '"What?"': 'dan',
 };
 
 let fail = 0;
 for (const b of analyze(text, chars)) {
   if (!b.isDialogue) continue;
   const want = expected[b.text];
-  const ok = want === b.speakerId;
+  const got = b.speakerId ?? b.label ?? null;
+  const ok = want === got;
   if (!ok) fail++;
-  console.log(`${ok ? '✓' : '✗'} ${b.text.padEnd(55)} → ${b.speakerId ?? '?'} (${b.confidence})${ok ? '' : ` expected ${want}`}`);
+  console.log(`${ok ? '✓' : '✗'} ${b.text.padEnd(55)} → ${got ?? '?'} (${b.confidence})${ok ? '' : ` expected ${want}`}`);
 }
 process.exit(fail ? 1 : 0);

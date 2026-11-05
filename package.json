@@ -5,7 +5,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --experimental-strip-types scripts/test-parse.ts"
+    "test": "node --experimental-strip-types scripts/test-parse.ts",
+    "eval": "node --experimental-strip-types scripts/eval-chapter.ts"
   },
   "dependencies": {
     "next": "^15.5.29",

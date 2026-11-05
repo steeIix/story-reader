@@ -14,6 +14,11 @@ const CONF_LABEL: Record<Confidence, string> = {
 };
 const isGuess = (c: Confidence) => c === 'turn' || c === 'beat';
 
+/** Someone the text names but who isn't in the cast: shown with a plain grey figure. */
+function standIn(label: string): Character {
+  return { id: `~${label}`, name: label, aliases: [], pronoun: 'they', color: '#8b8b99', side: 'left', images: [] };
+}
+
 export type Layout = 'chat' | 'margin' | 'stage';
 
 export function Reader({
@@ -23,6 +28,7 @@ export function Reader({
   size,
   showGuesses,
   onOverride,
+  onAddCharacter,
 }: {
   story: Story;
   chapter: Chapter;
@@ -30,6 +36,8 @@ export function Reader({
   size: number;
   showGuesses: boolean;
   onOverride: (key: string, ov: Override | undefined) => void;
+  /** Put an unlisted speaker (e.g. "The children") in the cast and give them this line. */
+  onAddCharacter?: (name: string, key: string) => void;
 }) {
   const blocks = useMemo(
     () => analyze(chapter.text, story.characters, chapter.overrides),
@@ -39,7 +47,7 @@ export function Reader({
   const [picking, setPicking] = useState<string | null>(null);
 
   const lines = blocks.filter((b) => b.isDialogue || b.speakerId);
-  const unknown = lines.filter((b) => !b.speakerId).length;
+  const unknown = lines.filter((b) => !b.speakerId && !b.label).length;
 
   if (!chapter.text.trim()) {
     return <div className="empty">This chapter is empty. Click <b>Edit</b> to paste your text in.</div>;
@@ -55,7 +63,7 @@ export function Reader({
       </p>
 
       {blocks.map((b) => {
-        const char = b.speakerId ? byId.get(b.speakerId) : null;
+        const char = b.speakerId ? byId.get(b.speakerId) : b.label ? standIn(b.label) : null;
         const spoken = b.isDialogue || !!b.speakerId;
         const open = picking === b.key;
         const toggle = () => setPicking(open ? null : b.key);
@@ -77,6 +85,14 @@ export function Reader({
               <SpeakerPicker
                 characters={story.characters}
                 block={b}
+                onAddCharacter={
+                  b.label && onAddCharacter
+                    ? () => {
+                        onAddCharacter(b.label!, b.key);
+                        setPicking(null);
+                      }
+                    : undefined
+                }
                 onPick={(ov) => {
                   onOverride(b.key, ov);
                   setPicking(null);
@@ -138,7 +154,7 @@ function Line({
   if (layout === 'stage') {
     return (
       <div
-        className={`sline side-${char?.side ?? 'left'} ${
+        className={`sline side-${char?.side ?? 'left'} ${!char ? 'nobody' : ''} ${b.label ? 'extra' : ''} ${
           showGuesses && (b.confidence === 'turn' || !char) ? 'is-guess' : ''
         } ${thought ? 'thought' : ''}`}
         style={{ ['--c' as string]: color }}
@@ -200,9 +216,11 @@ function SpeakerPicker({
   block,
   onPick,
   onClose,
+  onAddCharacter,
 }: {
   characters: Character[];
   block: Block;
+  onAddCharacter?: () => void;
   onPick: (ov: Override | undefined) => void;
   onClose: () => void;
 }) {
@@ -249,6 +267,11 @@ function SpeakerPicker({
         </>
       )}
       <div className="picker-foot">
+        {onAddCharacter && (
+          <button className="ghost" onClick={onAddCharacter}>
+            + Add “{block.label}” to the cast
+          </button>
+        )}
         {block.confidence === 'manual' && (
           <button className="ghost" onClick={() => onPick(undefined)}>
             ↺ Back to automatic

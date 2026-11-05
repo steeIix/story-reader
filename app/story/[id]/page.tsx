@@ -6,7 +6,7 @@ import { CharacterPanel } from '@/components/CharacterPanel';
 import { ChapterEditor } from '@/components/ChapterEditor';
 import { Reader, type Layout } from '@/components/Reader';
 import { downloadJson, useStory } from '@/lib/useStory';
-import { newChapter, type Chapter } from '@/lib/types';
+import { newChapter, newCharacter, type Chapter } from '@/lib/types';
 
 type View = 'read' | 'edit' | 'characters';
 
@@ -185,6 +185,16 @@ export default function StoryPage() {
             layout={layout}
             size={size}
             showGuesses={showGuesses}
+            onAddCharacter={(name, key) => {
+              const c = { ...newCharacter(name, story.characters.length), pronoun: 'they' as const, aliases: [name.replace(/^(the|a|an|some)\s+/i, '').toLowerCase()] };
+              update((s) => ({
+                ...s,
+                characters: [...s.characters, c],
+                chapters: s.chapters.map((ch) =>
+                  ch.id === chapter.id ? { ...ch, overrides: { ...ch.overrides, [key]: { speakerId: c.id } } } : ch,
+                ),
+              }));
+            }}
             onOverride={(key, ov) => {
               const overrides = { ...chapter.overrides };
               if (ov) overrides[key] = ov;
